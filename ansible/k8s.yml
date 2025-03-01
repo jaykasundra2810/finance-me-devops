@@ -27,14 +27,18 @@
       file:
         path: /etc/apt/sources.list.d/kubernetes.list
         state: absent
+    - name: Remove old Kubernetes key
+      file:
+        path: /usr/share/keyrings/kubernetes-archive-keyring.gpg
+        state: absent
     - name: Add Kubernetes apt key
-      get_url:
-        url: https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key
-        dest: /usr/share/keyrings/kubernetes-archive-keyring.gpg
-        mode: '0644'
+      apt_key:
+        url: https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key
+        keyring: /usr/share/keyrings/kubernetes-archive-keyring.gpg
+        state: present
     - name: Add Kubernetes repository
       apt_repository:
-        repo: "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /"
+        repo: "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /"
         state: present
         filename: kubernetes
         update_cache: yes
@@ -45,5 +49,4 @@
       loop:
         - kubeadm
         - kubelet
-        - kubectl
-    # Defer kubelet start until cluster init
+        - kubectlt
