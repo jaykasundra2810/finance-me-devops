@@ -12,19 +12,15 @@
         owner: root
         group: root
         mode: '0644'
-    - name: Remove conflicting Jenkins sources
-      file:
-        path: /etc/apt/sources.list.d/pkg_jenkins_io_debian_stable.list
-        state: absent
     - name: Update apt cache
       apt: update_cache=yes
-    - name: Install Java 11
-      apt: name=openjdk-11-jdk state=present
+    - name: Install Java 17
+      apt: name=openjdk-17-jdk state=present
     - name: Remove conflicting Java versions
       apt: name={{ item }} state=absent
       loop:
         - openjdk-8-jdk
-        - openjdk-17-jdk
+        - openjdk-11-jdk
     - name: Add Jenkins apt key
       get_url:
         url: https://pkg.jenkins.io/debian-stable/jenkins.io.key
@@ -32,7 +28,7 @@
         mode: '0644'
     - name: Add Jenkins repository
       apt_repository:
-        repo: "deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/"
+        repo: "deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] http://pkg.jenkins.io/debian-stable binary/"
         state: present
         filename: jenkins
         update_cache: yes
@@ -55,8 +51,8 @@
   tasks:
     - name: Update apt cache
       apt: update_cache=yes
-    - name: Install Java 11
-      apt: name=openjdk-11-jdk state=present
+    - name: Install Java 17
+      apt: name=openjdk-17-jdk state=present
     - name: Install Docker
       apt: name=docker.io state=present
     - name: Start Docker
