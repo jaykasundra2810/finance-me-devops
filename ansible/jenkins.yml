@@ -1,47 +1,63 @@
 - hosts: jenkins_master
   become: yes
   tasks:
+    - name: Ensure default Ubuntu sources
+      copy:
+        content: |
+          deb http://archive.ubuntu.com/ubuntu/ jammy main restricted universe multiverse
+          deb http://archive.ubuntu.com/ubuntu/ jammy-updates main restricted universe multiverse
+          deb http://archive.ubuntu.com/ubuntu/ jammy-security main restricted universe multiverse
+          deb http://archive.ubuntu.com/ubuntu/ jammy-backports main restricted universe multiverse
+        dest: /etc/apt/sources.list
+        owner: root
+        group: root
+        mode: '0644'
+    - name: Remove conflicting Jenkins sources
+      file:
+        path: /etc/apt/sources.list.d/pkg_jenkins_io_debian_stable.list
+        state: absent
     - name: Update apt cache
-      apt:
-        update_cache: yes
-    - name: Install Java
-      apt:
-        name: openjdk-11-jdk
-        state: present
+      apt: update_cache=yes
+    - name: Install Java 11
+      apt: name=openjdk-11-jdk state=present
+    - name: Remove conflicting Java versions
+      apt: name={{ item }} state=absent
+      loop:
+        - openjdk-8-jdk
+        - openjdk-17-jdk
     - name: Add Jenkins apt key
-      apt_key:
+      get_url:
         url: https://pkg.jenkins.io/debian-stable/jenkins.io.key
-        state: present
+        dest: /usr/share/keyrings/jenkins-keyring.asc
+        mode: '0644'
     - name: Add Jenkins repository
       apt_repository:
-        repo: deb http://pkg.jenkins.io/debian-stable binary/
+        repo: "deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/"
         state: present
+        filename: jenkins
+        update_cache: yes
     - name: Install Jenkins
-      apt:
-        name: jenkins
-        state: present
+      apt: name=jenkins state=present
+    - name: Ensure Jenkins user owns directories
+      file:
+        path: "{{ item }}"
+        owner: jenkins
+        group: jenkins
+        recurse: yes
+      loop:
+        - /var/lib/jenkins
+        - /var/cache/jenkins
     - name: Start Jenkins
-      service:
-        name: jenkins
-        state: started
-        enabled: yes
+      service: name=jenkins state=started enabled=yes
 
 - hosts: jenkins_slave
   become: yes
   tasks:
     - name: Update apt cache
-      apt:
-        update_cache: yes
-    - name: Install Java
-      apt:
-        name: openjdk-11-jdk
-        state: present
+      apt: update_cache=yes
+    - name: Install Java 11
+      apt: name=openjdk-11-jdk state=present
     - name: Install Docker
-      apt:
-        name: docker.io
-        state: present
+      apt: name=docker.io state=present
     - name: Start Docker
-      service:
-        name: docker
-        state: started
-        enabled: yes
+      service: name=docker state=started enabled=yes
