@@ -8,19 +8,36 @@
       apt:
         name: docker.io
         state: present
+    - name: Configure Docker to use systemd cgroup
+      copy:
+        content: |
+          {
+            "exec-opts": ["native.cgroupdriver=systemd"]
+          }
+        dest: /etc/docker/daemon.json
+        owner: root
+        group: root
+        mode: '0644'
     - name: Start Docker
       service:
         name: docker
-        state: started
+        state: restarted
         enabled: yes
+    - name: Remove old Kubernetes repo
+      file:
+        path: /etc/apt/sources.list.d/kubernetes.list
+        state: absent
     - name: Add Kubernetes apt key
-      apt_key:
-        url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
-        state: present
+      get_url:
+        url: https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key
+        dest: /usr/share/keyrings/kubernetes-archive-keyring.gpg
+        mode: '0644'
     - name: Add Kubernetes repository
       apt_repository:
-        repo: deb http://apt.kubernetes.io/ kubernetes-xenial main
+        repo: "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /"
         state: present
+        filename: kubernetes
+        update_cache: yes
     - name: Install kubeadm, kubelet, kubectl
       apt:
         name: "{{ item }}"
@@ -29,8 +46,4 @@
         - kubeadm
         - kubelet
         - kubectl
-    - name: Enable kubelet
-      service:
-        name: kubelet
-        state: started
-        enabled: yes
+    # Defer kubelet start until cluster init
