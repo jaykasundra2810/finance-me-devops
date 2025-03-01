@@ -1,0 +1,36 @@
+- hosts: k8s_master:k8s_nodes
+  become: yes
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+    - name: Install Docker
+      apt:
+        name: docker.io
+        state: present
+    - name: Start Docker
+      service:
+        name: docker
+        state: started
+        enabled: yes
+    - name: Add Kubernetes apt key
+      apt_key:
+        url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+        state: present
+    - name: Add Kubernetes repository
+      apt_repository:
+        repo: deb http://apt.kubernetes.io/ kubernetes-xenial main
+        state: present
+    - name: Install kubeadm, kubelet, kubectl
+      apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - kubeadm
+        - kubelet
+        - kubectl
+    - name: Enable kubelet
+      service:
+        name: kubelet
+        state: started
+        enabled: yes
