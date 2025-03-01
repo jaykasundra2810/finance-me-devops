@@ -57,7 +57,8 @@ resource "aws_instance" "jenkins_master" {
   instance_type           = "t2.medium"
   subnet_id               = aws_subnet.public.id
   vpc_security_group_ids  = [aws_security_group.devops_sg.id]
-  associate_public_ip_address = true  # Explicitly ensure public IP
+  associate_public_ip_address = true  
+  key_name                = "jenkins-key"
   tags = { Name = "Jenkins-Master" }
 }
 
@@ -67,15 +68,17 @@ resource "aws_instance" "jenkins_slave" {
   subnet_id               = aws_subnet.public.id
   vpc_security_group_ids  = [aws_security_group.devops_sg.id]
   associate_public_ip_address = true
+  key_name                = "jenkins-key"
   tags = { Name = "Jenkins-Slave" }
 }
 
 resource "aws_instance" "k8s_master" {
   ami                     = "ami-0e1bed4f06a3b463d"
-  instance_type           = "t2.large"
+  instance_type           = "t2.medium"
   subnet_id               = aws_subnet.public.id
   vpc_security_group_ids  = [aws_security_group.devops_sg.id]
   associate_public_ip_address = true
+  key_name                = "k8s-key"
   tags = { Name = "K8s-Master" }
 }
 
@@ -86,6 +89,7 @@ resource "aws_instance" "k8s_node" {
   subnet_id               = aws_subnet.public.id
   vpc_security_group_ids  = [aws_security_group.devops_sg.id]
   associate_public_ip_address = true
+  key_name                = "k8s-key"
   tags = { Name = "K8s-Node-${count.index}" }
 }
 
@@ -95,6 +99,7 @@ resource "aws_instance" "monitoring" {
   subnet_id               = aws_subnet.public.id
   vpc_security_group_ids  = [aws_security_group.devops_sg.id]
   associate_public_ip_address = true
+  key_name                = "monitoring-key"
   tags = { Name = "Monitoring" }
 }
 
@@ -104,5 +109,6 @@ resource "aws_instance" "ansible_control" {
   subnet_id               = aws_subnet.public.id
   vpc_security_group_ids  = [aws_security_group.devops_sg.id]
   associate_public_ip_address = true
+  key_name                = "ansible-key"
   tags = { Name = "Ansible-Control" }
 }
