@@ -12,6 +12,13 @@
         owner: root
         group: root
         mode: '0644'
+    - name: Clean apt cache
+      command: apt clean
+    - name: Restore Ubuntu apt key
+      apt_key:
+        keyserver: keyserver.ubuntu.com
+        id: 871920D1991BC93C
+        state: present
     - name: Update apt cache
       apt: update_cache=yes
     - name: Install Java 17
@@ -21,39 +28,17 @@
       loop:
         - openjdk-8-jdk
         - openjdk-11-jdk
-    - name: Add Jenkins apt key
-      get_url:
-        url: https://pkg.jenkins.io/debian-stable/jenkins.io.key
-        dest: /usr/share/keyrings/jenkins-keyring.asc
-        mode: '0644'
-    - name: Add Jenkins repository
-      apt_repository:
-        repo: "deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] http://pkg.jenkins.io/debian-stable binary/"
-        state: present
-        filename: jenkins
-        update_cache: yes
-    - name: Install Jenkins
-      apt: name=jenkins state=present
-    - name: Ensure Jenkins user owns directories
+    - name: Remove old Jenkins repo
       file:
-        path: "{{ item }}"
-        owner: jenkins
-        group: jenkins
-        recurse: yes
-      loop:
-        - /var/lib/jenkins
-        - /var/cache/jenkins
-    - name: Start Jenkins
-      service: name=jenkins state=started enabled=yes
-
-- hosts: jenkins_slave
-  become: yes
-  tasks:
-    - name: Update apt cache
-      apt: update_cache=yes
-    - name: Install Java 17
-      apt: name=openjdk-17-jdk state=present
-    - name: Install Docker
-      apt: name=docker.io state=present
-    - name: Start Docker
-      service: name=docker state=started enabled=yes
+        path: /etc/apt/sources.list.d/jenkins.list
+        state: absent
+    - name: Remove old Jenkins key
+      file:
+        path: /usr/share/keyrings/jenkins-keyring.gpg
+        state: absent
+    - name: Remove legacy Jenkins key
+      file:
+        path: /etc/apt/trusted.gpg.d/jenkins.gpg
+        state: absent
+    - name: Add Jenkins apt key
+s
