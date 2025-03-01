@@ -41,4 +41,4 @@
         path: /etc/apt/trusted.gpg.d/jenkins.gpg
         state: absent
     - name: Add Jenkins apt key
-s
+
